@@ -1,0 +1,39 @@
+//@version=5
+strategy("WMA Breakout Strategy with Stop-loss and Target", overlay=true)
+
+// Input parameters
+length = input(45, title="WMA Length")
+target_percent = input(1.0, title="Target (% of Entry Price)")
+stop_loss_type = input.string("Fixed", title="Stop-loss Type", options=["Fixed", "Trailing"])
+fixed_stop_loss = input(0.5, title="Fixed Stop-loss (%)")
+
+// Calculate WMA
+wma_value = ta.wma(close, length)
+
+// Buy condition
+buy_condition = close > wma_value and close[1] <= wma_value
+
+// Sell condition
+sell_condition = close < wma_value and close[1] >= wma_value
+
+// Entry and exit logic
+if (buy_condition)
+    entry_price = close
+    target_price = entry_price * (1 + target_percent / 100)
+    if stop_loss_type == "Fixed"
+        stop_loss_price = entry_price * (1 - fixed_stop_loss / 100)
+        strategy.entry("Buy", strategy.long, stop=stop_loss_price, limit=target_price)
+    else
+        strategy.entry("Buy", strategy.long)
+
+if (sell_condition)
+    entry_price = close
+    target_price = entry_price * (1 - target_percent / 100)
+    if stop_loss_type == "Fixed"
+        stop_loss_price = entry_price * (1 + fixed_stop_loss / 100)
+        strategy.entry("Sell", strategy.short, stop=stop_loss_price, limit=target_price)
+    else
+        strategy.entry("Sell", strategy.short)
+
+// Plot WMA
+plot(wma_value, color=color.blue, title="WMA")
